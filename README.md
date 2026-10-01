@@ -43,6 +43,7 @@ Prepare an Ubuntu VPS with Node.js 22, Caddy, `curl`, and `tar`. Point your doma
 sudo groupadd --system travellog
 sudo useradd --system --gid travellog --home-dir /var/lib/travellog --create-home --shell /usr/sbin/nologin travellog
 sudo useradd --create-home --gid travellog --shell /bin/bash deploy
+sudo install -d -o deploy -g travellog -m 0750 /opt/travellog
 sudo install -d -o deploy -g travellog -m 0750 /opt/travellog/releases
 sudo install -d -o travellog -g travellog -m 0750 /var/lib/travellog
 ```

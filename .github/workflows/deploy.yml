@@ -16,8 +16,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
@@ -31,7 +31,7 @@ jobs:
           cp data/trips.example.json "$RUNNER_TEMP/travellog-release/data/"
           cp -a dist node_modules "$RUNNER_TEMP/travellog-release/"
           tar -C "$RUNNER_TEMP/travellog-release" -czf "$RUNNER_TEMP/travellog-release.tar.gz" .
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: travellog-release
           path: ${{ runner.temp }}/travellog-release.tar.gz
@@ -42,7 +42,7 @@ jobs:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: travellog-release
           path: ${{ runner.temp }}
