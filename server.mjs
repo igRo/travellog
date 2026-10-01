@@ -21,18 +21,24 @@ const countryNamesByCode = new Map(atlasCountries.flatMap((country) => {
 }))
 const cityIndex = new Map()
 const usStatesByPlace = new Map()
+const normalizeCitySearch = (value) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase()
 
 for (const city of cityCatalog) {
   const name = city.name?.trim()
-  const country = countryNamesByCode.get(city.country)
+  const country = countryNamesByCode.get(city.country) ?? countryCodeLookup.byIso(city.country)?.country
   if (!name || !country || !Number.isFinite(Number(city.lat)) || !Number.isFinite(Number(city.lng))) continue
   const state = city.country === 'US' ? city.admin1 : undefined
-  const entry = { name, country, ...(state ? { state } : {}), lat: Number(city.lat), lng: Number(city.lng) }
+  const entry = { name, country, countryCode: city.country, ...(state ? { state } : {}), lat: Number(city.lat), lng: Number(city.lng) }
   if (state) usStatesByPlace.set(`${name.toLowerCase()}|${entry.lat}|${entry.lng}`, state)
-  const prefix = name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().slice(0, 2)
-  const entries = cityIndex.get(prefix) ?? []
-  entries.push(entry)
-  cityIndex.set(prefix, entries)
+  const searchTerms = new Set([name, country, city.country, state ?? '']
+    .flatMap((field) => normalizeCitySearch(field).split(/\s+/)))
+  for (const term of searchTerms) {
+    const prefix = term.slice(0, 2)
+    if (prefix.length < 2) continue
+    const entries = cityIndex.get(prefix) ?? new Set()
+    entries.add(entry)
+    cityIndex.set(prefix, entries)
+  }
 }
 
 app.use(express.json({ limit: '256kb' }))
@@ -182,18 +188,39 @@ app.get('/api/trips', async (_request, response) => {
 })
 
 app.get('/api/cities', (request, response) => {
-  const query = String(request.query.q ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase()
+  const query = normalizeCitySearch(String(request.query.q ?? '')).replace(/[,.]/g, ' ').replace(/\s+/g, ' ').trim()
+  const queryTerms = query.split(' ').filter(Boolean)
   if (query.length < 2) return response.json([])
 
-  const matches = (cityIndex.get(query.slice(0, 2)) ?? [])
-    .filter((city) => city.name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().startsWith(query))
-    .sort((left, right) => left.name.localeCompare(right.name)
-      || left.country.localeCompare(right.country)
-      || (left.state ?? '').localeCompare(right.state ?? ''))
+  const matches = [...(cityIndex.get(queryTerms[0].slice(0, 2)) ?? [])]
+    .filter((city) => {
+      const searchWords = [city.name, city.state, city.country, city.countryCode]
+        .filter(Boolean)
+        .flatMap((field) => normalizeCitySearch(field).split(/\s+/))
+      return queryTerms.every((term) => searchWords.some((word) => word.startsWith(term)))
+    })
+    .sort((left, right) => {
+      const leftName = normalizeCitySearch(left.name)
+      const rightName = normalizeCitySearch(right.name)
+      const leftNameMatches = queryTerms.filter((term) => leftName.split(/\s+/).some((word) => word.startsWith(term))).length
+      const rightNameMatches = queryTerms.filter((term) => rightName.split(/\s+/).some((word) => word.startsWith(term))).length
+      return Number(leftName !== query) - Number(rightName !== query)
+        || rightNameMatches - leftNameMatches
+        || Number(!left.state) - Number(!right.state)
+        || left.name.localeCompare(right.name)
+        || left.country.localeCompare(right.country)
+        || (left.state ?? '').localeCompare(right.state ?? '')
+    })
     .slice(0, 12)
 
   response.set('Cache-Control', 'public, max-age=3600')
-  response.json(matches)
+  response.json(matches.map((city) => ({
+    name: city.name,
+    country: city.country,
+    ...(city.state ? { state: city.state } : {}),
+    lat: city.lat,
+    lng: city.lng,
+  })))
 })
 
 app.put('/api/trips', async (request, response) => {
