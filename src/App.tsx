@@ -65,6 +65,11 @@ function formatPlaceLabel(place: Pick<Trip, 'city' | 'country' | 'state'>): stri
   return `${place.city}, ${countryCode ?? place.country}`
 }
 
+function comparePlaceNames(first: Pick<Trip, 'city' | 'country'>, second: Pick<Trip, 'city' | 'country'>): number {
+  return first.city.localeCompare(second.city, undefined, { sensitivity: 'base' })
+    || first.country.localeCompare(second.country, undefined, { sensitivity: 'base' })
+}
+
 function toStoredPlace(trip: Trip): StoredPlace {
   return {
     id: trip.id,
@@ -183,8 +188,8 @@ function App() {
     }
     return [...uniquePlaces.values()]
   }, [trips])
-  const countryList = useMemo(() => [...new Set(mapPlaces.map((trip) => trip.country))].sort(), [mapPlaces])
-  const homeCities = trips.filter((trip) => trip.starred)
+  const countryList = useMemo(() => [...new Set(mapPlaces.map((trip) => trip.country))].sort((first, second) => first.localeCompare(second, undefined, { sensitivity: 'base' })), [mapPlaces])
+  const homeCities = trips.filter((trip) => trip.starred).sort(comparePlaceNames)
   const selectedTrip = trips.find((trip) => trip.id === selectedId)
   const citySuggestions = citySuggestionResult.query === draft.city.trim() ? citySuggestionResult.cities : []
   const globeTexture = useMemo(() => createGlobeTexture(visitedCountries, starredCountries, selectedCountry), [selectedCountry, starredCountries, visitedCountries])
@@ -518,10 +523,15 @@ function App() {
   </dialog>
 
   if (isAdmin) {
-    const visitRows = (visits: Trip[]) => visits.length ? visits.map((trip) => <tr key={trip.id}>
-      <td><button className="ledger-city" onClick={() => focusTrip(trip)}>{formatPlaceLabel(trip)}</button></td>
-      <td className="ledger-actions"><button className="ledger-edit-button" onClick={() => openEditForm(trip)} aria-label={`Edit ${trip.city}`} title={`Edit ${trip.city}`}><Pencil size={14} /></button><button className="ledger-delete-button" onClick={() => removeTrip(trip.id)} aria-label={`Delete ${trip.city}`} title={`Delete ${trip.city}`}><Trash2 size={14} /></button></td>
-    </tr>) : <tr><td className="ledger-empty" colSpan={2}>No visited places logged yet</td></tr>
+    const visitRows = (visits: Trip[]) => visits.length ? [...new Set(visits.map((trip) => trip.country))]
+      .sort((first, second) => first.localeCompare(second, undefined, { sensitivity: 'base' }))
+      .flatMap((country) => [
+        <tr className="ledger-country-label" key={`country-${country}`}><td colSpan={2}>{country}</td></tr>,
+        ...visits.filter((trip) => trip.country === country).sort(comparePlaceNames).map((trip) => <tr key={trip.id}>
+          <td><button className="ledger-city" onClick={() => focusTrip(trip)}>{formatPlaceLabel(trip)}</button></td>
+          <td className="ledger-actions"><button className="ledger-edit-button" onClick={() => openEditForm(trip)} aria-label={`Edit ${trip.city}`} title={`Edit ${trip.city}`}><Pencil size={14} /></button><button className="ledger-delete-button" onClick={() => removeTrip(trip.id)} aria-label={`Delete ${trip.city}`} title={`Delete ${trip.city}`}><Trash2 size={14} /></button></td>
+        </tr>),
+      ]) : <tr><td className="ledger-empty" colSpan={2}>No visited places logged yet</td></tr>
     const visitTable = (visits: Trip[], home: Trip) => <div className="ledger-scroll"><table className="admin-table"><thead><tr><th>Visited places</th><th><button className="ledger-add-button" disabled={apiStatus !== 'ready'} aria-label={`Add visit to ${home.city}`} title={`Add visit to ${home.city}`} onClick={() => openNewForm({ source: home })}><Plus size={15} /></button></th></tr></thead><tbody>{visitRows(visits)}</tbody></table></div>
 
     return <div className="admin-page">
@@ -647,7 +657,7 @@ function App() {
             {apiStatus === 'ready' && !tableCollapsed &&
             <div className="country-accordion" id="country-index">
               {countryList.map((country, index) => {
-                const countryTrips = mapPlaces.filter((trip) => trip.country === country)
+                const countryTrips = mapPlaces.filter((trip) => trip.country === country).sort(comparePlaceNames)
                 const expanded = expandedCountry === country
                 return <section className={`country-entry ${selectedCountry === country ? 'country-selected' : ''}`} key={country}>
                   <div className="country-entry-head"><button className="country-entry-toggle" aria-expanded={expanded} onClick={() => focusCountry(country)}>
