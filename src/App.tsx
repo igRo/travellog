@@ -167,6 +167,7 @@ function App() {
   const [globeReady, setGlobeReady] = useState(false)
   const [globeSize, setGlobeSize] = useState({ width: 720, height: 540 })
   const globePointerInsideRef = useRef(false)
+  const hasSelectionRef = useRef(false)
   const hoveredPinRef = useRef(false)
   const globeRef = useRef<GlobeMethods | undefined>(undefined)
   const stageRef = useRef<HTMLDivElement>(null)
@@ -342,6 +343,13 @@ function App() {
   }, [])
 
   useEffect(() => {
+    hasSelectionRef.current = Boolean(selectedCountry || selectedId)
+    const controls = globeRef.current?.controls()
+    if (controls) controls.autoRotate = !hasSelectionRef.current && !globePointerInsideRef.current
+    document.querySelector('.country-selected, .city-selected')?.scrollIntoView({ block: 'nearest' })
+  }, [selectedCountry, selectedId, expandedCountry])
+
+  useEffect(() => {
     if (!globeReady) return
     if (selectedTrip) {
       globeRef.current?.pointOfView({ lat: selectedTrip.lat, lng: selectedTrip.lng, altitude: 0.9 }, 900)
@@ -485,7 +493,7 @@ function App() {
   function handleGlobePointerLeave() {
     globePointerInsideRef.current = false
     const controls = globeRef.current?.controls()
-    if (controls) controls.autoRotate = true
+    if (controls) controls.autoRotate = !hasSelectionRef.current
   }
 
   function prepareGlobe() {

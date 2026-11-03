@@ -415,10 +415,11 @@ a {
 
 @media (max-width: 720px) {
   .places-panel { top: auto; right: 10px; bottom: 10px; left: 10px; width: auto; height: min(42dvh, 340px); min-height: 225px; padding: 9px 13px 6px; }
-  .panel-heading { min-height: 32px; }
+  .panel-heading { min-height: 38px; }
   .country-entry-toggle { min-height: 39px; }
   .atlas-footer { min-height: 35px; flex-basis: 35px; }
-  .map-topline { top: calc(100dvh - max(min(42dvh, 340px), 225px)); right: auto; left: 23px; }
+  .map-topline { top: calc(100dvh - max(min(42dvh, 340px), 225px) - 10px + 9px); right: auto; left: 23px; }
+  .app-shell:has(.places-panel.table-collapsed) .map-topline { top: calc(100dvh - 44px); }
   .trip-modal { padding: 21px 17px; }
 }
 
