@@ -347,7 +347,7 @@ function App() {
     const controls = globeRef.current?.controls()
     if (controls) controls.autoRotate = !hasSelectionRef.current && !globePointerInsideRef.current
     document.querySelector('.country-selected, .city-selected')?.scrollIntoView({ block: 'nearest' })
-  }, [selectedCountry, selectedId, expandedCountry])
+  }, [selectedCountry, selectedId, expandedCountry, tableCollapsed])
 
   useEffect(() => {
     if (!globeReady) return
