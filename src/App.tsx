@@ -57,6 +57,7 @@ const landFeatures = feature(
 ) as unknown as { features: CountryShape[] }
 const landShape = landFeatures.features[0]
 const initialView = { lat: 24, lng: 10, altitude: 2.15 }
+const minimumGlobeAltitude = 0.45
 const emptyDraft: Draft = { city: '', country: '', lat: '', lng: '', starred: false, sources: [] }
 
 function formatPlaceLabel(place: Pick<Trip, 'city' | 'country' | 'state'>): string {
@@ -502,6 +503,12 @@ function App() {
   }
 
   function focusTrip(trip: Trip) {
+    if (selectedId === trip.id) {
+      setSelectedId(null)
+      setSelectedCountry(null)
+      setExpandedCountry(null)
+      return
+    }
     setSelectedId(trip.id)
     setSelectedCountry(trip.country)
     setExpandedCountry(trip.country)
@@ -529,8 +536,10 @@ function App() {
   }
 
   function prepareGlobe() {
-    const controls = globeRef.current?.controls()
+    const globe = globeRef.current
+    const controls = globe?.controls()
     if (controls) {
+      controls.minDistance = globe!.getGlobeRadius() * (1 + minimumGlobeAltitude)
       controls.autoRotate = !globePointerInsideRef.current
       controls.autoRotateSpeed = 0.22
     }
