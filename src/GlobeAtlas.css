@@ -105,13 +105,13 @@
   background: #ffd58e;
   box-shadow: 0 0 0 1px rgba(18, 53, 46, 0.58), 0 1px 3px rgba(7, 29, 25, 0.45);
   transform: rotate(-45deg);
-  transition: background 140ms ease;
+  transition: background 140ms ease, width 140ms ease, height 140ms ease, top 140ms ease, left 140ms ease, box-shadow 140ms ease;
 }
 
 .city-pin-center { width: 4px; height: 4px; border-radius: 50%; background: #385a4b; }
 .city-map-marker.is-starred .city-pin-shape { background: #f3d06a; }
-.city-pin-star { display: grid; width: 10px; height: 10px; place-items: center; color: #29483c; font-family: 'Apple Symbols', 'Segoe UI Symbol', 'Noto Sans Symbols 2', serif; font-size: 9px; font-weight: 700; line-height: 10px; transform: rotate(45deg) translateY(0.25px); }
-.city-map-marker.is-selected .city-pin-shape { background: #fff1bb; }
+.city-pin-star { display: grid; width: 12px; height: 12px; place-items: center; color: #29483c; font-family: 'Apple Symbols', 'Segoe UI Symbol', 'Noto Sans Symbols 2', serif; font-size: 12px; font-weight: 700; line-height: 12px; transform: rotate(45deg); }
+.city-map-marker.is-selected .city-pin-shape { top: calc(50% - 19px); left: calc(50% - 9px); width: 18px; height: 18px; background: #fff1bb; box-shadow: 0 0 0 2px rgba(255, 241, 187, 0.42), 0 0 0 1px rgba(18, 53, 46, 0.58), 0 2px 5px rgba(7, 29, 25, 0.5); }
 .city-map-marker:hover,
 .city-map-marker:focus-visible { z-index: 20; filter: brightness(1.12); }
 
