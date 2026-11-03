@@ -3,7 +3,7 @@
 :root {
   font-family: 'DM Sans', 'Avenir Next', sans-serif;
   color: #294a40;
-  background: #f1f4ec;
+  background: #173e39;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -27,6 +27,7 @@ body,
 
 body {
   min-height: 100dvh;
+  background: #173e39;
 }
 
 button,
