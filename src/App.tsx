@@ -102,8 +102,8 @@ function createGlobeTexture(
   selectedCountry: string | null,
 ): string {
   const canvas = document.createElement('canvas')
-  canvas.width = 2048
-  canvas.height = 1024
+  canvas.width = 4096
+  canvas.height = 2048
   const context = canvas.getContext('2d')
   if (!context) return ''
 
