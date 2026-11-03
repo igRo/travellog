@@ -205,6 +205,38 @@ function App() {
     document.title = isAdmin ? 'Travel log editor' : name ? `${name}'s travel log` : 'Travel log'
   }, [atlasName, isAdmin])
 
+  useEffect(() => {
+    if (!globeReady) return
+
+    const globe = globeRef.current
+    if (!globe) return
+
+    const anisotropy = Math.max(1, Math.min(4, globe.renderer().capabilities.getMaxAnisotropy()))
+    let attempts = 0
+    let animationFrame = 0
+    const applyTextureAnisotropy = () => {
+      let textureUpdated = false
+      globe.scene().traverse((mesh: {
+          geometry?: { type?: string }
+          material?: { map?: { image?: { src?: string }; anisotropy: number; needsUpdate: boolean } | null }
+        }) => {
+        const texture = mesh.geometry?.type === 'SphereGeometry' ? mesh.material?.map : null
+        if (texture?.image?.src !== globeTexture) return
+
+        texture.anisotropy = anisotropy
+        texture.needsUpdate = true
+        textureUpdated = true
+      })
+
+      if (!textureUpdated && attempts++ < 300) {
+        animationFrame = requestAnimationFrame(applyTextureAnisotropy)
+      }
+    }
+
+    animationFrame = requestAnimationFrame(applyTextureAnisotropy)
+    return () => cancelAnimationFrame(animationFrame)
+  }, [globeReady, globeTexture])
+
   const applyStore = useCallback((store: TripStore, revision: string) => {
     const loadedTrips = flattenStore(store)
     storeRevisionRef.current = revision
